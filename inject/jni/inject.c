@@ -463,9 +463,11 @@ exit:
     return ret;
 }
 
+#define ROOTDIR "/data/inject"
+
 int main(int argc, char** argv) {
     char* module_name = "com.android.settings";
-    char* apk_path = "/data/inject.apk";
+    char* apk_path = ROOTDIR "/inject.apk";
     int hello = 0;
     if (argc == 2) {
         module_name = argv[1];
@@ -487,11 +489,11 @@ int main(int argc, char** argv) {
     LOGD("================= start =================");
     LOGD("inject apk path: %s", apk_path);
     if (hello == 0) {
-        DEBUG_PRINT("[+] inject /data/libimportdex.so, hello=%d", hello);
-        inject_remote_process(target_pid, "/data/libimportdex.so", "callback", apk_path, strlen(apk_path));
+        DEBUG_PRINT("[+] inject " ROOTDIR "/libimportdex.so, hello=%d", hello);
+        inject_remote_process(target_pid, ROOTDIR "/libimportdex.so", "callback", apk_path, strlen(apk_path));
     } else {
-        DEBUG_PRINT("[+] inject /data/libhello.so, hello=%d", hello);
-        inject_remote_process(target_pid, "/data/libhello.so", "hook_entry", apk_path, strlen(apk_path));
+        DEBUG_PRINT("[+] inject " ROOTDIR "/libhello.so, hello=%d", hello);
+        inject_remote_process(target_pid, ROOTDIR "/libhello.so", "hook_entry", apk_path, strlen(apk_path));
     }
     LOGD("=================  end  =================");
     return 0;

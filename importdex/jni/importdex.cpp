@@ -164,7 +164,7 @@ void callback(char* param) {
 	LOGI("step---3");
 	jobjectArray objectarray = (jobjectArray) jni_env->CallStaticObjectMethod(entry_class, invoke_method, 0);
 	LOGI("step---4");
-	jvm->DetachCurrentThread();
+	// jvm->DetachCurrentThread();
 
 	LOGI("Main is finished");
 
