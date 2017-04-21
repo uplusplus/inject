@@ -7,12 +7,18 @@ package com.demo.inject2;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.wifi.ScanResult;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.util.Log;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.List;
 
 public class WifiLocationManager {
     private static final  String TAG = "WifiLocationManager";
@@ -40,6 +46,10 @@ public class WifiLocationManager {
         return (Context) context;
     }
 
+    public List<ScanResult> getWifiList(){
+        return wifiManager.getScanResults();
+    }
+
 /*
     bssid=08:10:77:f9:2a:1b;freq=2472;level=-44;flags=43;ssid=Netcore_2_4G;
     bssid=94:77:2b:27:e5:0c;freq=2412;level=-69;flags=11;ssid=lady_x;
@@ -59,6 +69,83 @@ public class WifiLocationManager {
         {"mac_address":"ec:26:ca:34:64:90","ssid":"TP-LINK88888","signal_strength":-69},
         {"mac_address":"c0:61:18:92:f8:a6","ssid":"TP-LINK_F8A6","signal_strength":-85}]}
 * */
+
+    public String getWifiInfo(){
+        List<ScanResult> wifiList = getWifiList();
+        StringBuilder sb = new StringBuilder();
+        sb.append("\n附近WIFI信号:\n");
+        for (int i = 0; i < wifiList.size(); i++) {
+            JSONObject tower = new JSONObject();
+            try {
+                tower.put("mac_address", wifiList.get(i).BSSID);
+                tower.put("ssid", wifiList.get(i).SSID);
+                tower.put("signal_strength", wifiList.get(i).level);
+                sb.append(tower.toString());
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+        return sb.toString();
+    }
+/*
+    bssid=08:10:77:f9:2a:1b;freq=2472;level=-44;flags=43;ssid=Netcore_2_4G;
+    bssid=94:77:2b:27:e5:0c;freq=2412;level=-69;flags=11;ssid=lady_x;
+    bssid=ec:26:ca:a5:f4:65;freq=2462;level=-75;flags=11;ssid=swj1993;
+    bssid=ec:26:ca:34:64:90;freq=2462;level=-84;flags=11;ssid=TP-LINK88888;
+    bssid=8e:25:93:ac:91:fe;freq=2412;level=-91;flags=11;ssid=dongruitianyou2;
+
+     holder.put: {
+     "version":"1.1.0",
+     "host":"maps.google.com",
+     "address_language":"zh_CN",
+     "request_address":true,
+     "wifi_towers":[
+        {"mac_address":"08:10:77:f9:2a:1b","ssid":"Netcore_2_4G","signal_strength":-42},
+        {"mac_address":"94:77:2b:27:e5:0c","ssid":"lady_x","signal_strength":-70},
+        {"mac_address":"ec:26:ca:a5:f4:65","ssid":"swj1993","signal_strength":-75},
+        {"mac_address":"ec:26:ca:34:64:90","ssid":"TP-LINK88888","signal_strength":-69},
+        {"mac_address":"c0:61:18:92:f8:a6","ssid":"TP-LINK_F8A6","signal_strength":-85}]}
+* */
+
+    public static String toAscii(String str) {
+        String result = null;
+        try {
+            result = new String(str.getBytes("UTF-8"), "iso-8859-1");
+        } catch (UnsupportedEncodingException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        return result;
+    }
+
+    Method set_ScanResults;
+    public  boolean setScanResults(String[][] list){
+        if(set_ScanResults == null){
+            Class<?> imclass = wifiManager.getClass();
+            try {
+                set_ScanResults = imclass.getMethod("setScanResults",  new Class[]{String[][].class});
+            } catch (Exception e) {
+                Log.e(TAG,  "Unsupport system.");
+                return false;
+            }
+        }
+
+        try {
+            if(set_ScanResults != null)
+            {
+                for(int i=0; i<list.length; i++){
+                    list[i][1] = toAscii( list[i][1] );
+                }
+
+                set_ScanResults.invoke(wifiManager, new Object[]{list});
+            }
+        } catch (Exception e) {
+            Log.e(TAG,  "Unsupport system.");
+            return false;
+        }
+
+        return true;
+    }
 
     public String getCurrentWifi(){
         StringBuilder sb = new StringBuilder();
@@ -82,7 +169,7 @@ public class WifiLocationManager {
         try {
             if(set_current_wifi != null)
             {
-                String utf_ssid = new String(ssid.getBytes(),"UTF-8");
+                String utf_ssid = toAscii(ssid);
                 set_current_wifi.invoke(wifiManager, utf_ssid, bssid, mac);
             }
         } catch (Exception e) {

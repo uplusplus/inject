@@ -448,7 +448,7 @@ int inject_remote_process(pid_t target_pid, const char *library_path, const char
         goto exit;
 
     printf("Press enter to dlclose and detach\n");
-    getchar();
+    // getchar();
     parameters[0] = sohandle;
 
     if (ptrace_call_wrapper(target_pid, "dlclose", dlclose, parameters, 1, &regs) == -1)
