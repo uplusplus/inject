@@ -58,37 +58,61 @@ static bool jni_exception(){
 	return false;
 }
 
+jobject getGlobalContext(JNIEnv *env) {
+	jclass activityThread = env->FindClass("android/app/ActivityThread");
+
+	jmethodID currentActivityThread = env->GetStaticMethodID(activityThread, "currentActivityThread", "()Landroid/app/ActivityThread;");
+
+	jobject at = env->CallStaticObjectMethod( activityThread, currentActivityThread);
+
+	jmethodID getApplication = env->GetMethodID(activityThread, "getApplication", "()Landroid/app/Application;");
+
+	jobject context = env->CallObjectMethod(at, getApplication);
+
+	return context;
+}
+
+// context.getDir("dex", 0);
+
+#define ROOTDIR "/data/inject"
+
 __attribute__ ((__constructor__))
 void callback(char* param) {
     LOGI("param=%s", param);
     char* path = param;
     if (param == NULL) {
-        path = "/data/inject.apk";
+        path = ROOTDIR "/inject.apk";
     }
-    path = "/data/inject.apk";
+    path = ROOTDIR "/inject.apk";
 	LOGI("Main is Executing!!");
 	JavaVM* jvm = AndroidRuntime::getJavaVM();
 	LOGI("jvm is %p",jvm);
-    JavaVMAttachArgs args = {JNI_VERSION_1_4, NULL, NULL};
+
+	JavaVMAttachArgs args = {JNI_VERSION_1_4, NULL, NULL};
 	jvm->AttachCurrentThread(&jni_env, (void*) &args);
 	//TODO 使用JNIEnv
 
 	//jvm->DetachCurrentThread();
 
 	LOGI("jni_env is %p", jni_env);
-    LOGI("path=%s", path);
+  LOGI("path=%s", path);
 
-	jstring apk_path = jni_env->NewStringUTF("/data/inject.apk");
-	jstring dex_out_path = jni_env->NewStringUTF("/data");
+	jobject context = getGlobalContext(jni_env);
+	jclass context_claxx = jni_env->FindClass("android/content/Context");
+	snprintf(sig_buffer, 512, "(%s%s)%s", JSTRING, "I", JSTRING);
+	jstring js_dex = jni_env->NewStringUTF("dex");
+	jmethodID getDir_method = jni_env->GetMethodID(context_claxx, "getDir", sig_buffer);
+	jstring dex_out_path = (jstring) jni_env->CallObjectMethod(context, getDir_method, js_dex, 0);
+
+	jstring apk_path = jni_env->NewStringUTF(ROOTDIR "/inject.apk");
+	// jstring dex_out_path = jni_env->NewStringUTF(ROOTDIR);
 	jclass dexloader_claxx = jni_env->FindClass("dalvik/system/DexClassLoader");
 
 	// LOGI("apk_path:%s",apk_path);
 	// LOGI("dex_out_path:%s",dex_out_path);
 
 	snprintf(sig_buffer, 512, "(%s%s%s%s)V", JSTRING, JSTRING, JSTRING, JCLASS_LOADER);
-
 	LOGI("sig_buffer is %s",sig_buffer);
-
 	jmethodID dexloader_init_method = jni_env->GetMethodID(dexloader_claxx, "<init>", sig_buffer);
 
 	snprintf(sig_buffer, 512, "(%s)%s", JSTRING, JCLASS);
