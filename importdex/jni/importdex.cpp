@@ -18,6 +18,7 @@ using namespace android;
 static const char JSTRING[] = "Ljava/lang/String;";
 static const char JCLASS_LOADER[] = "Ljava/lang/ClassLoader;";
 static const char JCLASS[] = "Ljava/lang/Class;";
+static const char JFILE[] = "Ljava/io/File;";
 
 static JNIEnv* jni_env;
 static char sig_buffer[512];
@@ -92,17 +93,22 @@ void callback(char* param) {
 	jvm->AttachCurrentThread(&jni_env, (void*) &args);
 	//TODO 使用JNIEnv
 
-	//jvm->DetachCurrentThread();
+	// jvm->DetachCurrentThread();
 
 	LOGI("jni_env is %p", jni_env);
   LOGI("path=%s", path);
 
 	jobject context = getGlobalContext(jni_env);
 	jclass context_claxx = jni_env->FindClass("android/content/Context");
-	snprintf(sig_buffer, 512, "(%s%s)%s", JSTRING, "I", JSTRING);
-	jstring js_dex = jni_env->NewStringUTF("dex");
+	snprintf(sig_buffer, 512, "(%s%s)%s", JSTRING, "I", JFILE);
 	jmethodID getDir_method = jni_env->GetMethodID(context_claxx, "getDir", sig_buffer);
-	jstring dex_out_path = (jstring) jni_env->CallObjectMethod(context, getDir_method, js_dex, 0);
+	jstring js_dex = jni_env->NewStringUTF("dex");
+	jobject dex_out_file = jni_env->CallObjectMethod(context, getDir_method, js_dex, 0);
+	jclass file_claxx = jni_env->FindClass("java/io/File");
+	snprintf(sig_buffer, 512, "()%s", JSTRING);
+	jmethodID getPath_method = jni_env->GetMethodID(file_claxx, "getAbsolutePath", sig_buffer);
+	jstring dex_out_path = (jstring)jni_env->CallObjectMethod(dex_out_file, getPath_method);
+
 
 	jstring apk_path = jni_env->NewStringUTF(ROOTDIR "/inject.apk");
 	// jstring dex_out_path = jni_env->NewStringUTF(ROOTDIR);
