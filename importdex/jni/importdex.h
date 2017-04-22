@@ -5,4 +5,4 @@
  *      Author: boyliang
  */
 
-void callback(char *);
+extern "C"  void callback(char *);

@@ -423,11 +423,13 @@ int inject_remote_process(pid_t target_pid, const char *library_path, const char
     parameters[0] = map_base;
     parameters[1] = RTLD_NOW| RTLD_GLOBAL;
 
-    if (ptrace_call_wrapper(target_pid, "dlopen", dlopen_addr, parameters, 2, &regs) == -1)
+    if (ptrace_call_wrapper(target_pid, "dlopen", dlopen_addr, parameters, 2, &regs) == -1){
+        DEBUG_PRINT("call dlopen failed.\n");
         goto exit;
+    }
 
     void * sohandle = ptrace_retval(&regs);
-
+    DEBUG_PRINT("library handle = %p\n", sohandle);
 #define FUNCTION_NAME_ADDR_OFFSET       0x100
     ptrace_writedata(target_pid, map_base + FUNCTION_NAME_ADDR_OFFSET, function_name, strlen(function_name) + 1);
     parameters[0] = sohandle;
@@ -437,14 +439,14 @@ int inject_remote_process(pid_t target_pid, const char *library_path, const char
         goto exit;
 
     void * hook_entry_addr = ptrace_retval(&regs);
-    DEBUG_PRINT("hook_entry_addr = %p\n", hook_entry_addr);
-    printf("hook_entry_addr = %p\n", hook_entry_addr);
+    DEBUG_PRINT("%s addr = %p\n", function_name, hook_entry_addr);
+    printf("%s addr = %p\n", function_name, hook_entry_addr);
 
 #define FUNCTION_PARAM_ADDR_OFFSET      0x200
     ptrace_writedata(target_pid, map_base + FUNCTION_PARAM_ADDR_OFFSET, param, strlen(param) + 1);
     parameters[0] = map_base + FUNCTION_PARAM_ADDR_OFFSET;
 
-    if (ptrace_call_wrapper(target_pid, "hook_entry", hook_entry_addr, parameters, 1, &regs) == -1)
+    if (ptrace_call_wrapper(target_pid, function_name, hook_entry_addr, parameters, 1, &regs) == -1)
         goto exit;
 
     printf("Press enter to dlclose and detach\n");

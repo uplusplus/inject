@@ -77,7 +77,12 @@ jobject getGlobalContext(JNIEnv *env) {
 
 #define ROOTDIR "/data/inject"
 
+
 __attribute__ ((__constructor__))
+void _init(){
+	LOGI("importdex dll _init");
+}
+
 void callback(char* param) {
     LOGI("param=%s", param);
     char* path = param;
