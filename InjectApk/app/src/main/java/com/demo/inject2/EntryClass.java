@@ -17,7 +17,7 @@ public final class EntryClass {
     public static Object[] invoke(int i) {
 
         try {
-            Log.i(TAG, ">>>>>>>>>>>>>Fake wifi info<<<<<<<<<<<<<<");
+            Log.e(TAG, ">>>>>>>>>>>>>Fake wifi info<<<<<<<<<<<<<<");
             Context context = ContexHunter.getContext();
             WifiLocationManager wifiLocation = new WifiLocationManager(context);
             wifiLocation.setCurrrentWifi("PingAn-LifeAgent", "04:bd:88:ed:cf:a0", "80:71:7a:17:a8:91");
@@ -46,6 +46,7 @@ public final class EntryClass {
                     {"fc:d7:33:71:2f:0c","cxs","-96"},
             };
             wifiLocation.setScanResults(result);
+            Log.e(TAG, ">>>>>>>>>>>>> DONE<<<<<<<<<<<<<<");
         } catch (Exception e) {
             StringWriter errors = new StringWriter();
             e.printStackTrace(new PrintWriter(errors));

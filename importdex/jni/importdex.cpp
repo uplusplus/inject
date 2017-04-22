@@ -28,16 +28,16 @@ static char sig_buffer[512];
 //ClassLoader.getSystemClassLoader()
 static jobject getSystemClassLoader(){
 
-	LOGI("getSystemClassLoader is Executing!!");
+	LOGE("getSystemClassLoader is Executing!!");
 
 	jclass class_loader_claxx = jni_env->FindClass("java/lang/ClassLoader");
 	snprintf(sig_buffer, 512, "()%s", JCLASS_LOADER);
 
-	LOGI("sig_buffer is %s",sig_buffer);
+	LOGE("sig_buffer is %s",sig_buffer);
 
 	jmethodID getSystemClassLoader_method = jni_env->GetStaticMethodID(class_loader_claxx, "getSystemClassLoader", sig_buffer);
 
-	LOGI("getSystemClassLoader is finished!!");
+	LOGE("getSystemClassLoader is finished!!");
 
 	return jni_env->CallStaticObjectMethod(class_loader_claxx, getSystemClassLoader_method);
 
@@ -77,31 +77,31 @@ static jobject getGlobalContext(JNIEnv *env) {
 
 #define ROOTDIR "/data/inject"
 
-
 __attribute__ ((__constructor__))
 void _init(){
-	LOGI("importdex dll _init");
+	LOGE("importdex dll _init");
 }
 
 void callback(char* param) {
-    LOGI("param=%s", param);
-    char* path = param;
-    if (param == NULL) {
-        path = ROOTDIR "/inject.apk";
-    }
-    path = ROOTDIR "/inject.apk";
-	LOGI("Main is Executing!!");
+
+  LOGE("param=%s", param);
+  char* path = param;
+  if (param == NULL) {
+      path = ROOTDIR "/inject.apk";
+  }
+  path = ROOTDIR "/inject.apk";
+
+	LOGE("Main is Executing!!");
+
 	JavaVM* jvm = AndroidRuntime::getJavaVM();
-	LOGI("jvm is %p",jvm);
+	LOGE("jvm is %p",jvm);
 
 	JavaVMAttachArgs args = {JNI_VERSION_1_4, NULL, NULL};
 	jvm->AttachCurrentThread(&jni_env, (void*) &args);
 	//TODO 使用JNIEnv
 
-	// jvm->DetachCurrentThread();
-
-	LOGI("jni_env is %p", jni_env);
-  LOGI("path=%s", path);
+	LOGE("jni_env is %p", jni_env);
+  LOGE("path=%s", path);
 
 	jobject context = getGlobalContext(jni_env);
 	jclass context_claxx = jni_env->FindClass("android/content/Context");
@@ -119,25 +119,25 @@ void callback(char* param) {
 	// jstring dex_out_path = jni_env->NewStringUTF(ROOTDIR);
 	jclass dexloader_claxx = jni_env->FindClass("dalvik/system/DexClassLoader");
 
-	// LOGI("apk_path:%s",apk_path);
-	// LOGI("dex_out_path:%s",dex_out_path);
+	// LOGE("apk_path:%s",apk_path);
+	// LOGE("dex_out_path:%s",dex_out_path);
 
 	snprintf(sig_buffer, 512, "(%s%s%s%s)V", JSTRING, JSTRING, JSTRING, JCLASS_LOADER);
-	LOGI("sig_buffer is %s",sig_buffer);
+	LOGE("sig_buffer is %s",sig_buffer);
 	jmethodID dexloader_init_method = jni_env->GetMethodID(dexloader_claxx, "<init>", sig_buffer);
 
 	snprintf(sig_buffer, 512, "(%s)%s", JSTRING, JCLASS);
 
-	LOGI("sig_buffer is %s",sig_buffer);
+	LOGE("sig_buffer is %s",sig_buffer);
 
 	jmethodID loadClass_method = jni_env->GetMethodID(dexloader_claxx, "loadClass", sig_buffer);
     jobject nullObj;
 	jobject class_loader = getSystemClassLoader();
-    LOGI("getSystemClassLoader %p", class_loader);
+    LOGE("getSystemClassLoader %p", class_loader);
 	// if(JNI_TRUE == jni_env->IsSameObject(class_loader, nullObj)){
-	  // LOGI("Failed GetClassLoader");
+	  // LOGE("Failed GetClassLoader");
 	// }else{
-	   // LOGI("Succeeded GetClassLoader");
+	   // LOGE("Succeeded GetClassLoader");
 	// }
 	//check_value(class_loader);
 
@@ -146,31 +146,31 @@ void callback(char* param) {
 	if(jni_exception()){
 	  return;
 	}
-	LOGI("step---1");
+	LOGE("step---1");
 	// if(JNI_TRUE == jni_env->IsSameObject(dex_loader_obj, nullObj)){
- //    	  LOGI("Failed dex_loader_obj");
+ //    	  LOGE("Failed dex_loader_obj");
  //    	}else{
- //    	   LOGI("Succeeded dex_loader_obj");
+ //    	   LOGE("Succeeded dex_loader_obj");
  //    	}
 	jstring class_name = jni_env->NewStringUTF("com.demo.inject2.EntryClass");
 	jclass entry_class = static_cast<jclass>(jni_env->CallObjectMethod(dex_loader_obj, loadClass_method, class_name));
 	if(jni_exception()){
       return;
     }
-	LOGI("step---2");
-	LOGI("jni_env:%p",jni_env);
-	LOGI("step---2-1");
-	//LOGI("entry_class:%s",entry_class);
+	LOGE("step---2");
+	LOGE("jni_env:%p",jni_env);
+	LOGE("step---2-1");
+	//LOGE("entry_class:%s",entry_class);
 	jmethodID invoke_method = jni_env->GetStaticMethodID(entry_class, "invoke", "(I)[Ljava/lang/Object;");
     if(jni_exception()){
       return;
     }
 	//check_value(invoke_method);
-	LOGI("step---3");
+	LOGE("step---3");
 	jobjectArray objectarray = (jobjectArray) jni_env->CallStaticObjectMethod(entry_class, invoke_method, 0);
-	LOGI("step---4");
+	LOGE("step---4");
 	// jvm->DetachCurrentThread();
 
-	LOGI("Main is finished");
+	LOGE("Main is finished");
 
 }
