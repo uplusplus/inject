@@ -59,7 +59,7 @@ static bool jni_exception(){
 	return false;
 }
 
-jobject getGlobalContext(JNIEnv *env) {
+static jobject getGlobalContext(JNIEnv *env) {
 	jclass activityThread = env->FindClass("android/app/ActivityThread");
 
 	jmethodID currentActivityThread = env->GetStaticMethodID(activityThread, "currentActivityThread", "()Landroid/app/ActivityThread;");

@@ -417,7 +417,7 @@ int inject_remote_process(pid_t target_pid, const char *library_path, const char
     DEBUG_PRINT("[+] Get imports: dlopen: %p, dlsym: %p, dlclose: %p, dlerror: %p\n",
             dlopen_addr, dlsym_addr, dlclose_addr, dlerror_addr);
 
-    DEBUG_PRINT("library path = %s\n", library_path);
+    DEBUG_PRINT("[+] library path = %s\n", library_path);
     ptrace_writedata(target_pid, map_base, library_path, strlen(library_path) + 1);
 
     parameters[0] = map_base;
@@ -429,7 +429,7 @@ int inject_remote_process(pid_t target_pid, const char *library_path, const char
     }
 
     void * sohandle = ptrace_retval(&regs);
-    DEBUG_PRINT("library handle = %p\n", sohandle);
+    DEBUG_PRINT("[+] library handle = %p\n", sohandle);
 #define FUNCTION_NAME_ADDR_OFFSET       0x100
     ptrace_writedata(target_pid, map_base + FUNCTION_NAME_ADDR_OFFSET, function_name, strlen(function_name) + 1);
     parameters[0] = sohandle;
@@ -439,7 +439,7 @@ int inject_remote_process(pid_t target_pid, const char *library_path, const char
         goto exit;
 
     void * hook_entry_addr = ptrace_retval(&regs);
-    DEBUG_PRINT("%s addr = %p\n", function_name, hook_entry_addr);
+    DEBUG_PRINT("[+] %s addr = %p\n", function_name, hook_entry_addr);
     printf("%s addr = %p\n", function_name, hook_entry_addr);
 
 #define FUNCTION_PARAM_ADDR_OFFSET      0x200
@@ -449,11 +449,19 @@ int inject_remote_process(pid_t target_pid, const char *library_path, const char
     if (ptrace_call_wrapper(target_pid, function_name, hook_entry_addr, parameters, 1, &regs) == -1)
         goto exit;
 
+    if (ptrace_call_wrapper(target_pid, "dlerror", dlerror_addr, parameters, 0, &regs) == -1)
+        goto exit;
+
+    void* dlerrmsg = ptrace_retval(&regs);
+    char buf_err_msg[128]={0};
+    ret = ptrace_readdata(target_pid, dlerrmsg, buf_err_msg, 127);
+    printf("ptrace_readdata[%d] %s\n", ret, buf_err_msg);
+
     printf("Press enter to dlclose and detach\n");
     // getchar();
     parameters[0] = sohandle;
 
-    if (ptrace_call_wrapper(target_pid, "dlclose", dlclose, parameters, 1, &regs) == -1)
+    if (ptrace_call_wrapper(target_pid, "dlclose", dlclose_addr, parameters, 1, &regs) == -1)
         goto exit;
 
     /* restore */
